@@ -15,8 +15,8 @@ jobs:
     steps:
     - name: Set Environment Variables
       run: |-
-      echo "::set-env name=DOTNET_CLI_TELEMETRY_OPTOUT::1"
-      echo "::set-env name=DOTNET_NOLOGO::1"
+        echo "::set-env name=DOTNET_CLI_TELEMETRY_OPTOUT::1"
+        echo "::set-env name=DOTNET_NOLOGO::1"
     - name: Check out repo
       uses: actions/checkout@v2
       with:
@@ -26,7 +26,8 @@ jobs:
       with:
         dotnet-version: '3.1.300'
     - name: Show installed .NET versions 
-      run: dotnet --info # start dotnet once so subsequent calls to not show the "Welcome to .NET Core" message
+      run: dotnet --info
+
     - name: Show installed tools
       run: dotnet tool list
 
