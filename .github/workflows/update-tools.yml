@@ -54,7 +54,7 @@ jobs:
         Write-Host "::set-env name=CREATED_BRANCHES::$branchesString"
 
 
-    - name: Create Pull Resusts
+    - name: Create Pull Requests
       uses: actions/github-script@v1
       with:
         github-token: ${{secrets.GITHUB_TOKEN}}
@@ -71,7 +71,7 @@ jobs:
               repo: ownerAndRepo[1],
               title: "This is a test",
               head: branch,
-              base: master
+              base: "master"
             })
           })
             
