@@ -44,10 +44,10 @@ foreach($toolName in $toolNames) {
         log "Tool '$toolName' was updated to version $version"
 
         $branchName = "toolupdates/$toolName-$version"
-        exec "git checkout -b `"$branchName`""
-        exec "git commit -am `"build(deps): Update $toolName to version $version`""
-        exec "git push --set-upstream origin `"$branchName`""
-        exec "git checkout -"        
+        exec "git checkout -b `"$branchName`"" | Out-Null
+        exec "git commit -am `"build(deps): Update $toolName to version $version`""  | Out-Null
+        exec "git push --set-upstream origin `"$branchName`""  | Out-Null
+        exec "git checkout -" | Out-Null        
 
         $branchNames += $branchName
     }    
