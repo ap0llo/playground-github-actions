@@ -42,39 +42,12 @@ jobs:
 
     - name: Update tools
       shell: pwsh
-      run: |-
-        $createdBranches = .github/workflows/update-tools.ps1
-        $branchesString = ""
-        foreach($branchName in $createdBranches) {
-          if($branchesString) {
-            $branchesString += ";"
-          }
-          $branchesString += $branchName
-        }
-        Write-Host "::set-env name=CREATED_BRANCHES::$branchesString"
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: ./utilities/update-tools.ps1
 
 
-    - name: Create Pull Requests
-      uses: actions/github-script@v1
-      with:
-        github-token: ${{secrets.GITHUB_TOKEN}}
-        script: |
-          
-          var branchesString = process.env['CREATED_BRANCHES']
-          console.log("branchesString is " + branchesString)
-          var branches = branchesString.split(';')    
-          branches.forEach(function(branch) {
-            console.log("Creating Pull Request for branch " + branch)
-            github.pulls.create({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              title: "This is a test",
-              head: branch,
-              base: "master"
-            })
-          })
-            
-            
+
 
 
 
