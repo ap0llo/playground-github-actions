@@ -11,9 +11,13 @@ function log($message) {
 
 function exec($command, [switch]$skipExitCodeCheck) {
     Invoke-Expression $command
-    if ($LASTEXITCODE -ne 0) {
-        throw "Command '$command' completed with exit code $LASTEXITCODE"
+
+    if(-not $skipExitCodeCheck) {
+        if ($LASTEXITCODE -ne 0) {
+            throw "Command '$command' completed with exit code $LASTEXITCODE"
+        }
     }
+
 }
 
 $updatedTools = @()     
