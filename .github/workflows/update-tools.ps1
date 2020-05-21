@@ -27,7 +27,7 @@ function exec($command, [switch]$skipExitCodeCheck) {
     }
 }
 
-$updatedTools = @()     
+$branchNames = @()     
 $toolNames = Get-InstalledTools
 foreach($toolName in $toolNames) {
 
@@ -35,13 +35,23 @@ foreach($toolName in $toolNames) {
     exec "git reset --hard" | Out-Null
     exec "git diff --quiet" | Out-Null # ensure working copy is clean
 
-    log "Updating $tool" 
+    log "Updating $toolName" 
     exec "dotnet tool update `"$toolName`" " | Out-Null
   
     exec "git diff --quiet" -skipExitCodeCheck | Out-Null
     if($LASTEXITCODE -ne 0) {
         $version = Get-ToolVersion $toolName
-        log "Tool $toolName was updated to version $version"
-        $updatedTools += $tool
-    }
+        log "Tool '$toolName' was updated to version $version"
+
+        $branchName = "toolupdates/$toolName-$version"
+        exec "git checkout -b `"$branchName`""
+        exec "git commit -am `"build(deps): Update $toolName to version $version`""
+        exec "git push --set-upstream origin `"$branchName`""
+        exec "git checkout -"        
+
+        $branchNames += $branchName
+    }    
 }
+
+return $branchNames
+
