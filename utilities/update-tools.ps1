@@ -29,7 +29,7 @@ if($env:GITHUB_TOKEN) {
 
 # Variables
 $repoRoot = (Join-Path $PSScriptRoot ".." | Resolve-Path).Path
-$toolManifestPath = (Join-Path $repoRoot "dotnet-tools.json")
+$toolManifestPath = Join-Path $repoRoot "dotnet-tools.json"
 $targetBranch = "master"
 
 # Main script

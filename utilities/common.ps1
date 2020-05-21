@@ -62,6 +62,10 @@ function Update-Tool {
         [Parameter(Mandatory = $true)][string]$ToolName
     )
 
+    if(-not(Test-Path $ManifestPath)) {
+        throw "Tool manifest at '$ManifestPath' does not exist"
+    }
+
     $manifestDir = Split-Path -Path $ManifestPath -Parent
 
     Push-Location $manifestDir
@@ -78,7 +82,7 @@ function Update-Tool {
         $version = Get-ToolVersion -MainfestPath $ManifestPath -ToolName $toolName
         Write-Log "Tool '$toolName' was updated to version $version"
 
-        $branchName = "toolupdates/$toolName-$version"
+        $branchName = "toolupdates/$toolName"
         Write-Log "Creating branch '$branchName'"
         Start-Command "git checkout -b `"$branchName`""
 
@@ -87,6 +91,7 @@ function Update-Tool {
 
         return $branchName
     } else {
+        Write-Log "Tool '$toolName' is already up to date"
         return $null
     }
 }
