@@ -1,7 +1,7 @@
 name: Update .NET local tools
 
 
-on
+on:
   push:
     branches:
     - master
