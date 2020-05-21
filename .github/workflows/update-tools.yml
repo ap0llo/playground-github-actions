@@ -27,7 +27,7 @@ jobs:
     - name: Install .NET SDK
       uses: actions/setup-dotnet@v1
       with:
-        dotnet-version: '3.1.300'
+        dotnet-version: '3.1.200'
 
     - name: Show installed .NET versions 
       run: dotnet --info
