@@ -1,0 +1,19 @@
+name: Update .NET local tools
+
+
+on
+  push:
+    branches:
+    - master
+    paths-ignore:
+    - dotnet-tools.json
+
+
+jobs:
+  update-tools:
+    runs-on: ubuntu-latest
+    steps:
+      -name: Show message
+      shell: pwsh
+      run: |-
+        echo "This is a test"
