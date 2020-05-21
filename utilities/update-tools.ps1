@@ -4,7 +4,7 @@
 . (Join-Path $PSScriptRoot "common.ps1") 
 
 # Install dependencies
-Install-Module -Name PowerShellForGitHub -Force
+Install-Module -Name PowerShellForGitHub -Force -Confirm
 
 Set-GitHubConfiguration -DisableTelemetry
 
@@ -53,13 +53,13 @@ foreach($toolName in $toolNames) {
 
         # Create a Pull Request for the branch (if there isn't a PR already)
         Write-Log "Getting open Pull Requests"
-        $pr = Get-GitHubPullRequest -State Open | Where-Object { $PsItem.Head.ref -eq $branchName  }
+        $pr = Get-GitHubPullRequest -State Open -NoStatus | Where-Object { $PsItem.Head.ref -eq $branchName  }
 
         if($pr) {
             Write-Log "Pull Request for branch '$branchName' already exists (#$($pr.number))"
         } else {
             Write-Log "Creating Pull Request"
-            $pr = New-GitHubPullRequest -Title $updateInfo.Summary -Head $newBranchName -Base $targetBranch
+            $pr = New-GitHubPullRequest -Title $updateInfo.Summary -Head $newBranchName -Base $targetBranch -NoStatus
             Write-Log "Created Pull Request #$($pr.Number)"
         }
 
