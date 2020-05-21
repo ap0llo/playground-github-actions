@@ -13,7 +13,13 @@ jobs:
   update-tools:
     runs-on: ubuntu-latest
     steps:
-      -name: Show message
-      shell: pwsh
-      run: |-
-        echo "This is a test"
+    - name: Check out repo
+      uses: actions/checkout@v2
+      with:
+        fetch-depth: 0
+    - name: Install .NET SDK
+      uses: actions/setup-dotnet@v1
+      with:
+        dotnet-version: '3.1.202' # SDK Version to use.         
+    - name: Show installed tools
+      run: dotnet tool list
