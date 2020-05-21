@@ -79,7 +79,7 @@ function Update-Tool {
     
     Start-Command "git diff --quiet" -SkipExitCodeCheck
     if($LASTEXITCODE -ne 0) {
-        $version = Get-ToolVersion -MainfestPath $ManifestPath -ToolName $toolName
+        $version = Get-ToolVersion -ManifestPath $ManifestPath -ToolName $toolName
         Write-Log "Tool '$toolName' was updated to version $version"
 
         $branchName = "toolupdates/$toolName"
