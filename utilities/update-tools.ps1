@@ -4,7 +4,7 @@ $ProgressPreference = "SilentlyContinue"
 . (Join-Path $PSScriptRoot "common.ps1") 
 
 # Install dependencies
-Install-Module -Name PowerShellForGitHub -Force -Confirm
+Install-Module -Name PowerShellForGitHub -Force
 
 Set-GitHubConfiguration -DisableTelemetry
 
