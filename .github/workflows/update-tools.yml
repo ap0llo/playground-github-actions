@@ -13,23 +13,41 @@ jobs:
   update-tools:
     runs-on: ubuntu-latest
     steps:
+
     - name: Set Environment Variables
       run: |-
         echo "::set-env name=DOTNET_CLI_TELEMETRY_OPTOUT::1"
         echo "::set-env name=DOTNET_NOLOGO::1"
+
     - name: Check out repo
       uses: actions/checkout@v2
       with:
         fetch-depth: 0
+
     - name: Install .NET SDK
       uses: actions/setup-dotnet@v1
       with:
         dotnet-version: '3.1.300'
+
     - name: Show installed .NET versions 
       run: dotnet --info
 
     - name: Show installed tools
       run: dotnet tool list
+    
+    - name: Update tools
+      shell: pwsh
+      run: |-
+        $json = Get-Content -Raw -Path ./dotnet-tools.json | ConvertFrom-Json
+        $toolNames = $json.tools | Get-Member -MemberType NoteProperty | Select-Object -ExpandProperty Name
+        foreach($toolName in $toolNames) {
+          Write-Host "Updating $tool" -ForegroundColor Green
+          Invoke-Expression "dotnet tool update `"$toolName`" "
+          if($LASTEXITCODE -ne 0) {
+            throw "Update of tool $toolName failed"
+          }
+        }
+
 
 
        
