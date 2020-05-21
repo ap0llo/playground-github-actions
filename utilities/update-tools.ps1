@@ -43,9 +43,13 @@ foreach($toolName in $toolNames) {
 
     if($newBranchName) {
         # Push the new branch
+        Write-Log "Pushing branch `"$newBranchName`""
         Start-Command "git push origin $newBranchName`:$newBranchName"
 
+        Start-Sleep -Seconds 2
+
         # Create a Pull Request for the branch
+        Write-Log "Creating Pull Request"
         $pr = New-GitHubPullRequest -Title "Update tool $toolName" -Head $newBranchName -Base $targetBranch
         Write-Log "Created Pull Request $($pr.Number)"
     }
