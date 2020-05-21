@@ -37,16 +37,7 @@ jobs:
     
     - name: Update tools
       shell: pwsh
-      run: |-
-        $json = Get-Content -Raw -Path ./dotnet-tools.json | ConvertFrom-Json
-        $toolNames = $json.tools | Get-Member -MemberType NoteProperty | Select-Object -ExpandProperty Name
-        foreach($toolName in $toolNames) {
-          Write-Host "Updating $tool" -ForegroundColor Green
-          Invoke-Expression "dotnet tool update `"$toolName`" "
-          if($LASTEXITCODE -ne 0) {
-            throw "Update of tool $toolName failed"
-          }
-        }
+      run: .github/workflows/update-tools.ps1
 
     - name: Show installed tools
       run: dotnet tool list
