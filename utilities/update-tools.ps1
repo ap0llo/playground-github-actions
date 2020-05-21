@@ -6,6 +6,8 @@
 # Install dependencies
 Install-Module -Name PowerShellForGitHub -Force
 
+Set-GitHubConfiguration -DisableTelemetry
+
 # Set up default repository and owner
 if($env:GITHUB_REPOSITORY) {
     Write-Log "Setting default owner and repository to '$env:GITHUB_REPOSITORY' "
