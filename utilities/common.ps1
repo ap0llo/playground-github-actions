@@ -78,18 +78,24 @@ function Update-Tool {
     }
     
     Start-Command "git diff --quiet" -SkipExitCodeCheck
-    if($LASTEXITCODE -ne 0) {
+    if($LASTEXITCODE -ne 0) {        
         $version = Get-ToolVersion -ManifestPath $ManifestPath -ToolName $toolName
         Write-Log "Tool '$toolName' was updated to version $version"
-
+        
         $branchName = "toolupdates/$toolName"
         Write-Log "Creating branch '$branchName'"
         Start-Command "git checkout -b `"$branchName`""
 
-        Start-Command "git commit -am `"build(deps): Update $toolName to version $version`"" 
+        $summary = "build(deps): Update $toolName to version $version"
+        Start-Command "git commit -am `"$summary`"" 
         Start-Command "git checkout -"
 
-        return $branchName
+        $result = New-Object -TypeName PSObject
+        $result | Add-Member -MemberType NoteProperty -Name BranchName -Value $branchName
+        $result | Add-Member -MemberType NoteProperty -Name Summary -Value $summary
+        
+        return $result
+
     } else {
         Write-Log "Tool '$toolName' is already up to date"
         return $null

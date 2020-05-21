@@ -6,8 +6,6 @@
 # Install dependencies
 Install-Module -Name PowerShellForGitHub -Force
 
-# TODO: configure credentials
-
 # Set up default repository and owner
 if($env:GITHUB_REPOSITORY) {
     Write-Log "Setting default owner and repository to '$env:GITHUB_REPOSITORY' "
@@ -39,19 +37,30 @@ $toolNames = Get-ToolName -ManifestPath $toolManifestPath
 foreach($toolName in $toolNames) {
     
     Reset-WorkingCopy
-    $newBranchName = Update-Tool -ManifestPath $toolManifestPath -ToolName $toolName
+    $updateInfo = Update-Tool -ManifestPath $toolManifestPath -ToolName $toolName
 
-    if($newBranchName) {
+    if($updateInfo) {
+
         # Push the new branch
-        Write-Log "Pushing branch `"$newBranchName`""
-        Start-Command "git push origin $newBranchName`:$newBranchName"
+        $branchName = $updateInfo.BranchName
+
+        Write-Log "Pushing branch `"$branchName`""
+        Start-Command "git push origin $branchName`:$branchName --force"
 
         Start-Sleep -Seconds 2
 
-        # Create a Pull Request for the branch
-        Write-Log "Creating Pull Request"
-        $pr = New-GitHubPullRequest -Title "Update tool $toolName" -Head $newBranchName -Base $targetBranch
-        Write-Log "Created Pull Request $($pr.Number)"
+        # Create a Pull Request for the branch (if there isn't a PR already)
+        Write-Log "Getting open Pull Requests"
+        $pr = Get-GitHubPullRequest -State Open | Where-Object { $PsItem.Head.ref -eq $branchName  }
+
+        if($pr) {
+            Write-Log "Pull Request for branch '$branchName' already exists (#$($pr.number))"
+        } else {
+            Write-Log "Creating Pull Request"
+            $pr = New-GitHubPullRequest -Title $branchName.Summary -Head $newBranchName -Base $targetBranch
+            Write-Log "Created Pull Request #$($pr.Number)"
+        }
+
     }
 }
 
