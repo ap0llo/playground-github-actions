@@ -59,7 +59,7 @@ foreach($toolName in $toolNames) {
             Write-Log "Pull Request for branch '$branchName' already exists (#$($pr.number))"
         } else {
             Write-Log "Creating Pull Request"
-            $pr = New-GitHubPullRequest -Title $branchName.Summary -Head $newBranchName -Base $targetBranch
+            $pr = New-GitHubPullRequest -Title $updateInfo.Summary -Head $newBranchName -Base $targetBranch
             Write-Log "Created Pull Request #$($pr.Number)"
         }
 
