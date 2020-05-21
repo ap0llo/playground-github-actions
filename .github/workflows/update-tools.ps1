@@ -5,19 +5,25 @@ function Get-InstalledTools {
     return $toolNames
 }
 
+function Get-ToolVersion($toolName) {
+    $json = Get-Content -Raw -Path "./dotnet-tools.json" | ConvertFrom-Json
+    $toolVersion = $json.tools.$toolName.version
+    if(-not $toolVersion) {
+        throw "Failed to determine version of tool $toolName"
+    }
+}
+
 function log($message) {
     Write-Host -ForegroundColor Green -Object $message
 }
 
 function exec($command, [switch]$skipExitCodeCheck) {
     Invoke-Expression $command
-
     if(-not $skipExitCodeCheck) {
         if ($LASTEXITCODE -ne 0) {
             throw "Command '$command' completed with exit code $LASTEXITCODE"
         }
     }
-
 }
 
 $updatedTools = @()     
@@ -26,13 +32,15 @@ foreach($toolName in $toolNames) {
 
     log "Resetting working copy"
     exec "git reset --hard"
+    exec "git diff --quiet" # ensure working copy is clean
 
     log "Updating $tool" 
     exec "dotnet tool update `"$toolName`" "
   
     exec "git diff --quiet" -skipExitCodeCheck
-    if($LASTEXITCODE -eq 0) {
-        log "Tool $toolName was updated"
+    if($LASTEXITCODE -ne 0) {
+        $version = Get-ToolVersion $toolName
+        log "Tool $toolName was updated to version $version"
         $updatedTools += $tool
     }
 }
