@@ -1,4 +1,4 @@
-
+$ProgressPreference = "SilentlyContinue"
 
 # Import Helper functions
 . (Join-Path $PSScriptRoot "common.ps1") 
