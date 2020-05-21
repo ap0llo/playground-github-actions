@@ -56,25 +56,24 @@ jobs:
 
     - name: Create Pull Resusts
       uses: actions/github-script@v1
-      id: set-result
-        with:
-          github-token: ${{secrets.GITHUB_TOKEN}}
-          script: |
-            var ownerAndRepo = "$GITHUB_REPOSITORY".split('/')
-            console.log("Owner is " + ownerAndRepo[0])
-            console.log("Repo is " + ownerAndRepo[1])
+      with:
+        github-token: ${{secrets.GITHUB_TOKEN}}
+        script: |
+          var ownerAndRepo = "$GITHUB_REPOSITORY".split('/')
+          console.log("Owner is " + ownerAndRepo[0])
+          console.log("Repo is " + ownerAndRepo[1])
 
-            var branches = "$CREATED_BRANCHES".split(';')
-            branches.forEach(function(branch) {
-              console.log("Creating Pull Request for branch " + branch)
-              github.pulls.create({
-                owner: ownerAndRepo[0],
-                repo: ownerAndRepo[1],
-                title: "This is a test",
-                head: branch,
-                base: master
-              })
+          var branches = "$CREATED_BRANCHES".split(';')
+          branches.forEach(function(branch) {
+            console.log("Creating Pull Request for branch " + branch)
+            github.pulls.create({
+              owner: ownerAndRepo[0],
+              repo: ownerAndRepo[1],
+              title: "This is a test",
+              head: branch,
+              base: master
             })
+          })
             
             
 
