@@ -35,6 +35,11 @@ jobs:
     - name: Show installed tools
       run: dotnet tool list
     
+    - name: Set up Git indentity
+      run: |-
+        git config --global user.email "githubactions@example.com"
+        git config --global user.name "GitHub Actions"
+
     - name: Update tools
       shell: pwsh
       run: .github/workflows/update-tools.ps1
