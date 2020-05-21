@@ -11,6 +11,7 @@ function Get-ToolVersion($toolName) {
     if(-not $toolVersion) {
         throw "Failed to determine version of tool $toolName"
     }
+    return $toolVersion
 }
 
 function log($message) {
@@ -31,13 +32,13 @@ $toolNames = Get-InstalledTools
 foreach($toolName in $toolNames) {
 
     log "Resetting working copy"
-    exec "git reset --hard"
-    exec "git diff --quiet" # ensure working copy is clean
+    exec "git reset --hard" | Out-Null
+    exec "git diff --quiet" | Out-Null # ensure working copy is clean
 
     log "Updating $tool" 
-    exec "dotnet tool update `"$toolName`" "
+    exec "dotnet tool update `"$toolName`" " | Out-Null
   
-    exec "git diff --quiet" -skipExitCodeCheck
+    exec "git diff --quiet" -skipExitCodeCheck | Out-Null
     if($LASTEXITCODE -ne 0) {
         $version = Get-ToolVersion $toolName
         log "Tool $toolName was updated to version $version"
