@@ -1,3 +1,5 @@
+Write-Host "::group::Install Dependencies"
+
 $ProgressPreference = "SilentlyContinue"
 
 #
@@ -5,6 +7,9 @@ $ProgressPreference = "SilentlyContinue"
 #
 Write-Log "Installing module 'PowerShellForGitHub'"
 Install-Module -Name PowerShellForGitHub -Force
+
+Write-Host "::endgroup"
+Write-Host "::group::Configure PowerShellForGitHub"
 
 #
 # Configure PowerShellForGitHub
@@ -31,3 +36,5 @@ if($env:GITHUB_TOKEN) {
 } else {
     throw "Failed to set authentication token Expected environment variable 'GITHUB_TOKEN' to be set"
 }
+
+Write-Host "::endgroup"
