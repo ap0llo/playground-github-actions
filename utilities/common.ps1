@@ -269,26 +269,28 @@ function Publish-Branch {
 
     if($existingBranches -contains $branchName) {
         Write-Log "Branch `"$branchName`" already exists, skipping tool update"
-    }
-
-    Write-Log "Pushing branch `"$branchName`""
-    Start-Command "git push origin $branchName`:$branchName"
-
-    Start-Sleep -Seconds 2
-
-    # Create a Pull Request for the branch (if there isn't a PR already)
-    Write-Log "Getting open Pull Requests"
-    $pr = Get-GitHubPullRequest -State Open -NoStatus | Where-Object { $PsItem.Head.ref -eq $branchName  }
-
-    if($pr) {
-        Write-Log "Pull Request for branch '$branchName' already exists (#$($pr.number))"
     } else {
-        Write-Log "Creating Pull Request"
 
-        $title = Get-CommitMessageSummary -UpdateInfo $UpdateInfo
-        $body = Get-CommitMessageBody -UpdateInfo $UpdateInfo
-
-        $pr = New-GitHubPullRequest -Title $title -Body $body -Head $branchName -Base $UpdateInfo.BaseBranch -NoStatus
-        Write-Log "Created Pull Request #$($pr.Number)"
+        Write-Log "Pushing branch `"$branchName`""
+        Start-Command "git push origin $branchName`:$branchName"
+    
+        Start-Sleep -Seconds 2
+    
+        # Create a Pull Request for the branch (if there isn't a PR already)
+        Write-Log "Getting open Pull Requests"
+        $pr = Get-GitHubPullRequest -State Open -NoStatus | Where-Object { $PsItem.Head.ref -eq $branchName  }
+    
+        if($pr) {
+            Write-Log "Pull Request for branch '$branchName' already exists (#$($pr.number))"
+        } else {
+            Write-Log "Creating Pull Request"
+    
+            $title = Get-CommitMessageSummary -UpdateInfo $UpdateInfo
+            $body = Get-CommitMessageBody -UpdateInfo $UpdateInfo
+    
+            $pr = New-GitHubPullRequest -Title $title -Body $body -Head $branchName -Base $UpdateInfo.BaseBranch -NoStatus
+            Write-Log "Created Pull Request #$($pr.Number)"
+        }
     }
+
 }
