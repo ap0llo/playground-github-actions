@@ -51,7 +51,16 @@ function Reset-WorkingCopy {
     Write-Log "Resetting working copy"
     Start-Command "git reset --hard" 
     Start-Command "git diff --quiet" # ensure working copy is clean
+}
 
+function Get-UpdateBranchName {
+
+    param(
+        [Parameter(Mandatory = $true)][string]$ToolName,
+        [Parameter(Mandatory = $true)][string]$ToolVersion
+    )
+
+    return "toolupdate/$ToolName/$ToolVersion"
 }
 
 
@@ -82,7 +91,7 @@ function Update-Tool {
         $version = Get-ToolVersion -ManifestPath $ManifestPath -ToolName $toolName
         Write-Log "Tool '$toolName' was updated to version $version"
         
-        $branchName = "toolupdates/$toolName"
+        $branchName = Get-UpdateBranchName -ToolName $ToolName -ToolVersion $ToolVersion
         Write-Log "Creating branch '$branchName'"
         Start-Command "git checkout -b `"$branchName`""
 

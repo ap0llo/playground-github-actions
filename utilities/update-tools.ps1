@@ -32,9 +32,11 @@ $repoRoot = (Join-Path $PSScriptRoot ".." | Resolve-Path).Path
 $toolManifestPath = Join-Path $repoRoot "dotnet-tools.json"
 $targetBranch = "master"
 
+#
 # Main script
+#
 $toolNames = Get-ToolName -ManifestPath $toolManifestPath
-
+$branchNames = Get-GitHubBranch | Select-Object -ExpandProperty name
 
 foreach($toolName in $toolNames) {
     
@@ -45,6 +47,10 @@ foreach($toolName in $toolNames) {
 
         # Push the new branch
         $branchName = $updateInfo.BranchName
+
+        if($branchNames -contains $branchName) {
+            Write-Log "Branch `"$branchName`" already exists, skipping tool update"
+        }
 
         Write-Log "Pushing branch `"$branchName`""
         Start-Command "git push origin $branchName`:$branchName --force"
