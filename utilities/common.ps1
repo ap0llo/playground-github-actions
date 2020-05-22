@@ -75,6 +75,9 @@ function Update-Tool {
         throw "Tool manifest at '$ManifestPath' does not exist"
     }
 
+    # Save currently installed version of tool
+    $currentVersion = Get-ToolVersion -ManifestPath $ManifestPath -ToolName $toolName
+
     $manifestDir = Split-Path -Path $ManifestPath -Parent
 
     Push-Location $manifestDir
@@ -86,10 +89,11 @@ function Update-Tool {
         Pop-Location
     }
     
-    Start-Command "git diff --quiet" -SkipExitCodeCheck
-    if($LASTEXITCODE -ne 0) {        
-        $version = Get-ToolVersion -ManifestPath $ManifestPath -ToolName $toolName
-        Write-Log "Tool '$toolName' was updated to version $version"
+    $newVersion = Get-ToolVersion -ManifestPath $ManifestPath -ToolName $toolName
+
+    if($currentVersion -ne $newVersion) {        
+        
+        Write-Log "Tool '$toolName' was updated to version $newVersion"
         
         $branchName = Get-UpdateBranchName -ToolName $ToolName -ToolVersion $ToolVersion
         Write-Log "Creating branch '$branchName'"
