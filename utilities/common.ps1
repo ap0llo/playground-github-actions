@@ -102,7 +102,7 @@ function Update-Tool {
         
         Write-Log "Tool '$toolName' was updated to version $newVersion"
         
-        $branchName = Get-UpdateBranchName -ToolName $ToolName -ToolVersion $ToolVersion
+        $branchName = Get-UpdateBranchName -ToolName $ToolName -ToolVersion $newVersion
         Write-Log "Creating branch '$branchName'"
         Start-Command "git checkout -b `"$branchName`""
 
