@@ -115,7 +115,7 @@ function Update-Tool {
         $commitMessageBody >> $commitMessageFile
 
         Start-Command "git add `"$ManifestPath`""
-        Start-Command "git commit --file`"$commitMessageFile`"" 
+        Start-Command "git commit --file `"$commitMessageFile`"" 
         Start-Command "git checkout -"
 
         $result = New-Object -TypeName PSObject
