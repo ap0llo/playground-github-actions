@@ -265,7 +265,7 @@ function Publish-Branch {
     Write-Log "Getting branches from GitHub"
     $existingBranches = Get-GitHubBranch | Select-Object -ExpandProperty name
 
-    $branchName = $UpdateInfo.BranchName
+    $branchName = Get-UpdateBranchName -UpdateInfo $UpdateInfo
 
     if($existingBranches -contains $branchName) {
         Write-Log "Branch `"$branchName`" already exists, skipping tool update"
