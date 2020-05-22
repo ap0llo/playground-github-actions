@@ -16,7 +16,7 @@ $toolNames = Get-ToolName -ManifestPath $toolManifestPath
 
 foreach($toolName in $toolNames) {
     
-    Write-Host "::group name=Update Tool $toolName"
+    Write-Host "::group::Update Tool $toolName"
 
     Reset-WorkingCopy
     $updateInfo = Update-Tool -ManifestPath $toolManifestPath -ToolName $toolName
