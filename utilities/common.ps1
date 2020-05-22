@@ -70,6 +70,19 @@ function Get-TempFile {
     return Join-Path $dir $name
 }
 
+function New-UpdateResult {
+    
+    $result = New-Object -TypeName PSObject
+    $result | Add-Member -MemberType NoteProperty -Name Updated -Value $false
+    $result | Add-Member -MemberType NoteProperty -Name BranchName -Value ""
+    $result | Add-Member -MemberType NoteProperty -Name Summary -Value ""
+    $result | Add-Member -MemberType NoteProperty -Name Body -Value ""
+    $result | Add-Member -MemberType NoteProperty -Name ToolName -Value ""
+    $result | Add-Member -MemberType NoteProperty -Name PreviousVersion -Value ""
+    $result | Add-Member -MemberType NoteProperty -Name NewVersion -Value ""
+    return $result    
+}
+
 
 function Update-Tool {
 
@@ -96,8 +109,11 @@ function Update-Tool {
         Pop-Location
     }
     
-    $newVersion = Get-ToolVersion -ManifestPath $ManifestPath -ToolName $toolName
+    $result = New-UpdateResult
+    $result.ToolName = $ToolName
+    $result.PreviousVersion = $currentVersion
 
+    $newVersion = Get-ToolVersion -ManifestPath $ManifestPath -ToolName $toolName
     if($currentVersion -ne $newVersion) {        
         
         Write-Log "Tool '$toolName' was updated to version $newVersion"
@@ -117,16 +133,15 @@ function Update-Tool {
         Start-Command "git add `"$ManifestPath`""
         Start-Command "git commit --file `"$commitMessageFile`"" 
         Start-Command "git checkout -"
-
-        $result = New-Object -TypeName PSObject
-        $result | Add-Member -MemberType NoteProperty -Name BranchName -Value $branchName
-        $result | Add-Member -MemberType NoteProperty -Name Summary -Value $commitMessageSummary
-        $result | Add-Member -MemberType NoteProperty -Name Body -Value $commitMessageBody
         
-        return $result
-
+        $result.Updated = $true
+        $result.NewVersion = $newVersion
+        $result.BranchName = $branchName
+        $result.Summary = $commitMessageSummary
+        $result.Body = $commitMessageBody
+        
     } else {
         Write-Log "Tool '$toolName' is already up to date at version $currentVersion"
-        return $null
     }
+    return $result
 }

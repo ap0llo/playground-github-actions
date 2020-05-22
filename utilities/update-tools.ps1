@@ -41,12 +41,12 @@ $branchNames = Get-GitHubBranch | Select-Object -ExpandProperty name
 foreach($toolName in $toolNames) {
     
     Reset-WorkingCopy
-    $updateInfo = Update-Tool -ManifestPath $toolManifestPath -ToolName $toolName
+    $updateResult = Update-Tool -ManifestPath $toolManifestPath -ToolName $toolName
 
-    if($updateInfo) {
+    if($updateResult.Updated) {
 
         # Push the new branch
-        $branchName = $updateInfo.BranchName
+        $branchName = $updateResult.BranchName
 
         if($branchNames -contains $branchName) {
             Write-Log "Branch `"$branchName`" already exists, skipping tool update"
@@ -65,7 +65,7 @@ foreach($toolName in $toolNames) {
             Write-Log "Pull Request for branch '$branchName' already exists (#$($pr.number))"
         } else {
             Write-Log "Creating Pull Request"
-            $pr = New-GitHubPullRequest -Title $updateInfo.Summary -Body $updateInfo.Body -Head $branchName -Base $targetBranch -NoStatus
+            $pr = New-GitHubPullRequest -Title $updateResult.Summary -Body $updateResult.Body -Head $branchName -Base $targetBranch -NoStatus
             Write-Log "Created Pull Request #$($pr.Number)"
         }
 
