@@ -64,6 +64,13 @@ function Get-UpdateBranchName {
 }
 
 
+function Get-TempFile {
+    $dir = [System.IO.Path]::GetTempPath()
+    $name = [System.IO.Path]::GetRandomFileName()
+    return Join-Path $dir $name
+}
+
+
 function Update-Tool {
 
     param(
@@ -99,18 +106,27 @@ function Update-Tool {
         Write-Log "Creating branch '$branchName'"
         Start-Command "git checkout -b `"$branchName`""
 
-        $summary = "build(deps): Update $toolName to version $version"
-        Start-Command "git commit -am `"$summary`"" 
+        $commitMessageSummary = "build(deps): Bump $toolName from $currentVersion version $newVersion"
+        $commitMessageBody = "Bumps .NET Local tool '$toolName' from version $currentVersion to $newVersion"
+
+        $commitMessageFile = Get-TempFile
+        $commitMessageSummary > $commitMessageFile
+        "" >> $commitMessageFile
+        $commitMessageBody >> $commitMessageFile
+
+        Start-Command "git add `"$ManifestPath`""
+        Start-Command "git commit --file`"$commitMessageFile`"" 
         Start-Command "git checkout -"
 
         $result = New-Object -TypeName PSObject
         $result | Add-Member -MemberType NoteProperty -Name BranchName -Value $branchName
-        $result | Add-Member -MemberType NoteProperty -Name Summary -Value $summary
+        $result | Add-Member -MemberType NoteProperty -Name Summary -Value $commitMessageSummary
+        $result | Add-Member -MemberType NoteProperty -Name Body -Value $commitMessageBody
         
         return $result
 
     } else {
-        Write-Log "Tool '$toolName' is already up to date"
+        Write-Log "Tool '$toolName' is already up to date at version $currentVersion"
         return $null
     }
 }
