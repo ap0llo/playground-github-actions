@@ -284,8 +284,11 @@ function Publish-Branch {
         Write-Log "Pull Request for branch '$branchName' already exists (#$($pr.number))"
     } else {
         Write-Log "Creating Pull Request"
-        $pr = New-GitHubPullRequest -Title $UpdateInfo.Summary -Body $UpdateInfo.Body -Head $branchName -Base $UpdateInfo.BaseBranch -NoStatus
+
+        $title = Get-CommitMessageSummary -UpdateInfo $UpdateInfo
+        $body = Get-CommitMessageBody -UpdateInfo $UpdateInfo
+
+        $pr = New-GitHubPullRequest -Title $title -Body $body -Head $branchName -Base $UpdateInfo.BaseBranch -NoStatus
         Write-Log "Created Pull Request #$($pr.Number)"
     }
-
 }
