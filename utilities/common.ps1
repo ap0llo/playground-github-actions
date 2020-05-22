@@ -53,14 +53,27 @@ function Reset-WorkingCopy {
     Start-Command "git diff --quiet" # ensure working copy is clean
 }
 
+function Get-CurrentBranchName {
+
+    $command = "git rev-parse --abbrev-ref HEAD"
+    $currentBranch = Invoke-Expression $command
+    if ($LASTEXITCODE -ne 0) {
+        throw "Command '$command' completed with exit code $LASTEXITCODE"
+    }
+
+    Write-Log "Current branch is $currentBranch"
+    return $currentBranch
+}
+
 function Get-UpdateBranchName {
 
     param(
-        [Parameter(Mandatory = $true)][string]$ToolName,
-        [Parameter(Mandatory = $true)][string]$ToolVersion
+        [Parameter(Mandatory = $true)]$UpdateInfo      
     )
 
-    return "toolupdate/$ToolName/$ToolVersion"
+    $toolName = $UpdateInfo.ToolName
+    $version = $UpdateInfo.NewVersion
+    return "toolupdate/$toolName/$version"
 }
 
 
@@ -70,17 +83,59 @@ function Get-TempFile {
     return Join-Path $dir $name
 }
 
-function New-UpdateResult {
+function New-UpdateInfo {
     
     $result = New-Object -TypeName PSObject
     $result | Add-Member -MemberType NoteProperty -Name Updated -Value $false
-    $result | Add-Member -MemberType NoteProperty -Name BranchName -Value ""
-    $result | Add-Member -MemberType NoteProperty -Name Summary -Value ""
-    $result | Add-Member -MemberType NoteProperty -Name Body -Value ""
+    $result | Add-Member -MemberType NoteProperty -Name BaseBranch -Value ""
     $result | Add-Member -MemberType NoteProperty -Name ToolName -Value ""
+    $result | Add-Member -MemberType NoteProperty -Name ToolDisplayName -Value ""
     $result | Add-Member -MemberType NoteProperty -Name PreviousVersion -Value ""
     $result | Add-Member -MemberType NoteProperty -Name NewVersion -Value ""
     return $result    
+}
+
+
+function Get-CommitMessageSummary {
+
+    param(
+        [Parameter(Mandatory=$true)]$UpdateInfo
+    )
+
+    return "build(deps): Bump $($UpdateInfo.ToolDisplayName) from $($UpdateInfo.PreviousVersion) to $($UpdateInfo.NewVersion) "
+}
+
+function Get-CommitMessageBody {
+    param(
+        [Parameter(Mandatory=$true)]$UpdateInfo
+    )
+
+    return "Bumps $($UpdateInfo.ToolDisplayName) from version $($UpdateInfo.PreviousVersion) to $($UpdateInfo.NewVersion)"
+}
+
+
+function New-UpdateBranch {
+
+    param(
+        [Parameter(Mandatory=$true)]$UpdateInfo
+    )
+
+    $branchName = Get-UpdateBranchName -UpdateInfo $UpdateInfo
+    Write-Log "Creating branch '$branchName'"
+    Start-Command "git checkout -b `"$branchName`""
+
+    $commitMessageSummary = Get-CommitMessageSummary -UpdateInfo $UpdateInfo
+    $commitMessageBody = Get-CommitMessageBody -UpdateInfo $UpdateInfo
+
+    $commitMessageFile = Get-TempFile
+    $commitMessageSummary > $commitMessageFile
+    "" >> $commitMessageFile
+    $commitMessageBody >> $commitMessageFile
+    
+    Start-Command "git commit -a --file `"$commitMessageFile`"" 
+    Start-Command "git checkout -"    
+
+    return $branchName
 }
 
 
@@ -94,9 +149,15 @@ function Update-Tool {
     if(-not(Test-Path $ManifestPath)) {
         throw "Tool manifest at '$ManifestPath' does not exist"
     }
-
+    
     # Save currently installed version of tool
     $currentVersion = Get-ToolVersion -ManifestPath $ManifestPath -ToolName $toolName
+
+    $updateInfo = New-UpdateInfo
+    $updateInfo.ToolName = $ToolName
+    $updateInfo.ToolDisplayName = $ToolName
+    $updateInfo.PreviousVersion = $currentVersion
+    $updateInfo.BaseBranch = Get-CurrentBranchName
 
     $manifestDir = Split-Path -Path $ManifestPath -Parent
 
@@ -109,43 +170,21 @@ function Update-Tool {
         Pop-Location
     }
     
-    $result = New-UpdateResult
-    $result.ToolName = $ToolName
-    $result.PreviousVersion = $currentVersion
-
     $newVersion = Get-ToolVersion -ManifestPath $ManifestPath -ToolName $toolName
     if($currentVersion -ne $newVersion) {        
         
         Write-Log "Tool '$toolName' was updated to version $newVersion"
         
-        $branchName = Get-UpdateBranchName -ToolName $ToolName -ToolVersion $newVersion
-        Write-Log "Creating branch '$branchName'"
-        Start-Command "git checkout -b `"$branchName`""
+        $updateInfo.Updated = $true
+        $updateInfo.NewVersion = $newVersion
 
-        $commitMessageSummary = "build(deps): Bump $toolName from $currentVersion version $newVersion"
-        $commitMessageBody = "Bumps .NET Local tool '$toolName' from version $currentVersion to $newVersion"
-
-        $commitMessageFile = Get-TempFile
-        $commitMessageSummary > $commitMessageFile
-        "" >> $commitMessageFile
-        $commitMessageBody >> $commitMessageFile
-
-        Start-Command "git add `"$ManifestPath`""
-        Start-Command "git commit --file `"$commitMessageFile`"" 
-        Start-Command "git checkout -"
-        
-        $result.Updated = $true
-        $result.NewVersion = $newVersion
-        $result.BranchName = $branchName
-        $result.Summary = $commitMessageSummary
-        $result.Body = $commitMessageBody
+        New-UpdateBranch $updateInfo | Out-Null
         
     } else {
         Write-Log "Tool '$toolName' is already up to date at version $currentVersion"
     }
-    return $result
+    return $updateInfo
 }
-
 
 
 function Get-DotnetReleaseInfo {
@@ -154,7 +193,6 @@ function Get-DotnetReleaseInfo {
         [Parameter(Mandatory = $true)][string]$ReleaseIndexUrl,
         [Parameter(Mandatory = $true)][string]$ReleaseChannel
     )
-
 
     Write-Log "Downloading .NET Release Index"
     $response = Invoke-WebRequest -Uri $ReleaseIndexUrl
@@ -197,7 +235,6 @@ function Get-DotNetSdkVersion {
     return $sdkVersion
 }
 
-
 function Set-DotNetSdkVersion {
 
     param(
@@ -212,4 +249,43 @@ function Set-DotNetSdkVersion {
     $json = Get-Content $GlobalJsonPath -Raw | ConvertFrom-Json
     $json.sdk.version = $Version
     $json | ConvertTo-Json | Out-File $GlobalJsonPath
+}
+
+
+<#
+.SYNOPSIS
+Publishes the branch if it does not yet exist and creates a Pull Request
+#>
+function Publish-Branch {
+
+    param(
+        [Parameter(Mandatory = $true)]$UpdateInfo     
+    )
+
+    Write-Log "Getting branches from GitHub"
+    $existingBranches = Get-GitHubBranch | Select-Object -ExpandProperty name
+
+    $branchName = $UpdateInfo.BranchName
+
+    if($existingBranches -contains $branchName) {
+        Write-Log "Branch `"$branchName`" already exists, skipping tool update"
+    }
+
+    Write-Log "Pushing branch `"$branchName`""
+    Start-Command "git push origin $branchName`:$branchName"
+
+    Start-Sleep -Seconds 2
+
+    # Create a Pull Request for the branch (if there isn't a PR already)
+    Write-Log "Getting open Pull Requests"
+    $pr = Get-GitHubPullRequest -State Open -NoStatus | Where-Object { $PsItem.Head.ref -eq $branchName  }
+
+    if($pr) {
+        Write-Log "Pull Request for branch '$branchName' already exists (#$($pr.number))"
+    } else {
+        Write-Log "Creating Pull Request"
+        $pr = New-GitHubPullRequest -Title $UpdateInfo.Summary -Body $UpdateInfo.Body -Head $branchName -Base $UpdateInfo.BaseBranch -NoStatus
+        Write-Log "Created Pull Request #$($pr.Number)"
+    }
+
 }
