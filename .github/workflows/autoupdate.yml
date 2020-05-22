@@ -46,6 +46,29 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: ./utilities/update-tools.ps1
 
+  update-dotnet-sdk:
+    runs-on: ubuntu-latest
+    steps:
+
+    - name: Check out repo
+      uses: actions/checkout@v2
+      with:
+        fetch-depth: 0
+
+    - name: Show current SDK
+      run: cat ./global.json
+    
+    - name: Set up Git indentity
+      run: |-
+        git config --global user.email "githubactions@example.com"
+        git config --global user.name "GitHub Actions"
+
+    - name: Update .NET SDK
+      shell: pwsh
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: ./utilities/update-dotnet-sdk.ps1      
+
 
 
 

@@ -145,3 +145,71 @@ function Update-Tool {
     }
     return $result
 }
+
+
+
+function Get-DotnetReleaseInfo {
+
+    param(
+        [Parameter(Mandatory = $true)][string]$ReleaseIndexUrl,
+        [Parameter(Mandatory = $true)][string]$ReleaseChannel
+    )
+
+
+    Write-Log "Downloading .NET Release Index"
+    $response = Invoke-WebRequest -Uri $ReleaseIndexUrl
+    $releaseIndexJson = ConvertFrom-Json -InputObject $response.Content
+
+    Write-Log "Getting Release information for channel $releaseChannel"
+    $channelReleaseInfo = $releaseIndexJson.'releases-index' | Where-Object { $PSItem.'channel-version' -eq $releaseChannel}
+
+    if(($channelReleaseInfo | Measure-Object).Count -gt 1) {
+        throw "Found multiple entries for channel $releaseChannel in the Release Index"
+    } 
+    elseif($channelReleaseInfo -eq $null) {
+        throw "Failed to find entry for channel $releaseChannel in the Release Index"
+    } else {    
+        
+        $releaseInfoUrl = $channelReleaseInfo.'releases.json'
+        Write-Log "Getting Release Information from '$releaseInfoUrl'"
+        $response = Invoke-WebRequest -Uri $releaseInfoUrl
+        $releaseJson = ConvertFrom-Json $response.Content
+        return $releaseJson
+    }
+}
+
+function Get-DotNetSdkVersion {
+
+    param(
+        [Parameter(Mandatory = $true)][string]$GlobalJsonPath
+    )
+
+    if(-not(Test-Path $GlobalJsonPath)) {
+        throw "global.json at '$GlobalJsonPath' does not exist"
+    }
+
+    $json = Get-Content $GlobalJsonPath -Raw | ConvertFrom-Json
+
+    $sdkVersion = $json.sdk.version
+    if(-not $sdkVersion) {
+        throw "Failed to read .NET SDK version from '$GlobalJsonPath'"
+    }
+    return $sdkVersion
+}
+
+
+function Set-DotNetSdkVersion {
+
+    param(
+        [Parameter(Mandatory = $true)][string]$GlobalJsonPath,
+        [Parameter(Mandatory = $true)][string]$Version
+    )
+
+    if(-not(Test-Path $GlobalJsonPath)) {
+        throw "global.json at '$GlobalJsonPath' does not exist"
+    }
+
+    $json = Get-Content $GlobalJsonPath -Raw | ConvertFrom-Json
+    $json.sdk.version = $Version
+    $json | ConvertTo-Json | Out-File $GlobalJsonPath
+}
